@@ -66,7 +66,7 @@ def speechToText(ctx, data: io.BytesIO=None):
         formatted_time = get_formatted_current_time()
         display_name = f"stt-job-{formatted_time}"
         description = f"stt-job-{formatted_time}"
-        namespace = ai_client.get_namespace().data
+        namespace = get_namespace()
         file_names = [file_name]
         
         MODEL_DETAILS = oci.ai_speech.models.TranscriptionModelDetails(model_type="WHISPER_MEDIUM", domain="GENERIC",  language_code=LANGUAGE_CODE,
