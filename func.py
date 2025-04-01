@@ -27,6 +27,7 @@ def get_object(bucketName, objectName):
     # client = oci.object_storage.ObjectStorageClient(config)
     signer = oci.auth.signers.get_resource_principals_signer()
     client = oci.object_storage.ObjectStorageClient(config={}, signer=signer)
+    print("INFO: object_storage_client initilized")
     namespace = client.get_namespace().data
     try:
         print("Searching for bucket and object", flush=True)
@@ -51,9 +52,11 @@ def speechToText(ctx, data: io.BytesIO=None):
         
         file_name = body["file_name"]
         bucket = body["bucket"]
-        
+        print("INFO: file_name parsed as {}, bucket parsed as {}".format(file_name,bucket), flush=True)
         
         ai_client = getSpeechClient()
+        print("INFO: ai_client initilized")
+        
         formatted_time = get_formatted_current_time()
         display_name = f"stt-job-{formatted_time}"
         description = f"stt-job-{formatted_time}"
@@ -109,8 +112,8 @@ def speechToText(ctx, data: io.BytesIO=None):
 
         output_location = transcription_job.data.output_location.prefix + namespace + "_" + bucket + "_" + file_name + ".json"
         response_message = get_object(bucketName=bucket, objectName=output_location)
-    except Exception:
-        error = 'Input a JSON object in the format: \'{"bucketName": "<bucket name>"}, "objectName": "<object name>"}\' '
+    except Exception as error:
+        print(error)
         raise Exception(error)
     return response.Response(
         ctx,
