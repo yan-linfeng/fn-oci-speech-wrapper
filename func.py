@@ -40,7 +40,7 @@ def get_object(bucketName, objectName):
             message = "Failed: The object " + objectName + " could not be retrieved."
     except Exception as e:
         message = "Failed: " + str(e.message)
-    return { "content": message }
+    return message
 
 def get_namespace():
     signer = oci.auth.signers.get_resource_principals_signer()
@@ -123,7 +123,7 @@ def speechToText(ctx, data: io.BytesIO=None):
         raise Exception(error)
     return response.Response(
         ctx,
-        response_data=json.dumps(response_message),
+        response_data=response_message,
         headers={"Content-Type": "application/json"}
     )
     
