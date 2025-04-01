@@ -42,6 +42,12 @@ def get_object(bucketName, objectName):
         message = "Failed: " + str(e.message)
     return { "content": message }
 
+def get_namespace():
+    signer = oci.auth.signers.get_resource_principals_signer()
+    client = oci.object_storage.ObjectStorageClient(config={}, signer=signer)
+    print("INFO: object_storage_client initilized")
+    return client.get_namespace().data
+
 def get_formatted_current_time():
     now = datetime.datetime.now()
     return now.strftime("%Y_%m_%d_%H%M_%S_%f")[:-3]
