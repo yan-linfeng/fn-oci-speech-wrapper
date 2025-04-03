@@ -10,7 +10,6 @@ from fdk import response
 COMPARTMENT_ID = os.getenv("COMPARTMENT_ID")
 OUTPUT_BUCKET = "bucket-audio-clips"
 JOB_PREFIX = "STT"
-LANGUAGE_CODE = "ja"
 
 def handler(ctx, data: io.BytesIO=None):
     return speechToText(ctx,data)
@@ -54,6 +53,7 @@ def speechToText(ctx, data: io.BytesIO=None):
         
         file_name = body["file_name"]
         bucket = body["bucket"]
+        language_code = body["language_code"]
         print("INFO: file_name parsed as {}, bucket parsed as {}".format(file_name,bucket), flush=True)
         
         ai_client = getSpeechClient()
@@ -65,7 +65,7 @@ def speechToText(ctx, data: io.BytesIO=None):
         namespace = get_namespace()
         file_names = [file_name]
         
-        MODEL_DETAILS = oci.ai_speech.models.TranscriptionModelDetails(model_type="WHISPER_MEDIUM", domain="GENERIC",  language_code=LANGUAGE_CODE,
+        MODEL_DETAILS = oci.ai_speech.models.TranscriptionModelDetails(model_type="WHISPER_MEDIUM", domain="GENERIC",  language_code=language_code,
             transcription_settings=oci.ai_speech.models.TranscriptionSettings(
                 diarization=oci.ai_speech.models.Diarization(
                     is_diarization_enabled=False         
