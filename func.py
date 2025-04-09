@@ -18,9 +18,9 @@ def handler(ctx, data: io.BytesIO=None):
     if action == "create_job":
         return create_job(ctx, body)
     elif action == "query_job":
-        pass
+        return query_job(ctx, body)
     elif action == "get_result":
-        pass
+        return get_result(ctx, body)
     return None
 
 def getSpeechClient():
