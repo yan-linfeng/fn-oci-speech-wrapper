@@ -110,7 +110,7 @@ def create_job(ctx, body):
         print(transcription_job.data)
         return response.Response(
             ctx,
-            response_data=json.dumps(transcription_job.data.__dict__),
+            response_data=json.dumps(transcription_job.data),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
@@ -144,7 +144,7 @@ def query_job(ctx, body):
 
         return response.Response(
             ctx,
-            response_data=json.dumps(transcription_tasks.data.items[0].__dict__),
+            response_data=json.dumps(transcription_tasks.data.items[0]),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
