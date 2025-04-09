@@ -12,6 +12,16 @@ JOB_PREFIX = "STT"
 NAMESPACE = ""
 SIGNER = oci.auth.signers.get_resource_principals_signer()
 
+def to_dict(obj):
+    if isinstance(obj, dict):
+        return {k: to_dict(v) for k, v in obj.items()}
+    elif hasattr(obj, "__dict__"):
+        return to_dict(obj.__dict__)
+    elif isinstance(obj, list):
+        return [to_dict(item) for item in obj]
+    else:
+        return obj
+
 def handler(ctx, data: io.BytesIO = None):
     try:
         body = json.loads(data.getvalue())
@@ -110,7 +120,7 @@ def create_job(ctx, body):
         print(transcription_job.data)
         return response.Response(
             ctx,
-            response_data=json.dumps(transcription_job.data),
+            response_data=json.dumps(to_dict(transcription_job.data)),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
@@ -144,7 +154,7 @@ def query_job(ctx, body):
 
         return response.Response(
             ctx,
-            response_data=json.dumps(transcription_tasks.data.items[0]),
+            response_data=json.dumps(to_dict(transcription_tasks.data.items[0])),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
@@ -172,4 +182,5 @@ def get_result(ctx, body):
             ctx,
             response_data=json.dumps({"error": str(e)}),
             headers={"Content-Type": "application/json"}
-        )    
+        )
+    
