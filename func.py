@@ -117,10 +117,12 @@ def create_job(ctx, body):
         )
 
         transcription_job = ai_client.create_transcription_job(create_transcription_job_details=transcription_job_details)
-        print(transcription_job.data)
+        response_object = {
+            "id" : transcription_job.data.id,
+        }
         return response.Response(
             ctx,
-            response_data=json.dumps(to_dict(transcription_job.data)),
+            response_data=json.dumps(response_object),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
