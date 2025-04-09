@@ -10,7 +10,7 @@ from fdk import response
 COMPARTMENT_ID = os.getenv("COMPARTMENT_ID")
 OBJECT_STORAGE_BUCKET = os.getenv("OBJECT_STORAGE_BUCKET")
 JOB_PREFIX = "STT"
-NAMESPACE = None
+NAMESPACE = ""
 
 def handler(ctx, data: io.BytesIO=None):
     body = json.loads(data.getvalue())
@@ -29,7 +29,7 @@ def getSpeechClient():
     return ai_client
 
 def get_namespace():
-    if NAMESPACE == None:
+    if NAMESPACE == "":
         signer = oci.auth.signers.get_resource_principals_signer()
         client = oci.object_storage.ObjectStorageClient(config={}, signer=signer)
         NAMESPACE = client.get_namespace().data
