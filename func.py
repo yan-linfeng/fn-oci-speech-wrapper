@@ -8,16 +8,32 @@ import datetime
 from fdk import response
 
 COMPARTMENT_ID = os.getenv("COMPARTMENT_ID")
-OUTPUT_BUCKET = "bucket-audio-clips"
+OBJECT_STORAGE_BUCKET = os.getenv("OBJECT_STORAGE_BUCKET")
 JOB_PREFIX = "STT"
+NAMESPACE = None
 
 def handler(ctx, data: io.BytesIO=None):
-    return speechToText(ctx,data)
+    body = json.loads(data.getvalue())
+    action = body["action"]
+    if action == "create_job":
+        return create_job(ctx, body)
+    elif action == "query_job":
+        pass
+    elif action == "get_result":
+        pass
+    return None
 
 def getSpeechClient():
     signer = oci.auth.signers.get_resource_principals_signer()
     ai_client = oci.ai_speech.AIServiceSpeechClient(config={}, signer=signer)
     return ai_client
+
+def get_namespace():
+    if NAMESPACE == None:
+        signer = oci.auth.signers.get_resource_principals_signer()
+        client = oci.object_storage.ObjectStorageClient(config={}, signer=signer)
+        NAMESPACE = client.get_namespace().data
+    return NAMESPACE
 
 def get_object(bucketName, objectName):
     signer = oci.auth.signers.get_resource_principals_signer()
@@ -37,24 +53,16 @@ def get_object(bucketName, objectName):
         message = "Failed: " + str(e.message)
     return message
 
-def get_namespace():
-    signer = oci.auth.signers.get_resource_principals_signer()
-    client = oci.object_storage.ObjectStorageClient(config={}, signer=signer)
-    print("INFO: object_storage_client initilized")
-    return client.get_namespace().data
 
 def get_formatted_current_time():
     now = datetime.datetime.now()
     return now.strftime("%Y_%m_%d_%H%M_%S_%f")[:-3]
 
-def speechToText(ctx, data: io.BytesIO=None):
+def create_job(ctx, body):
     try:
-        body = json.loads(data.getvalue())
-        
         file_name = body["file_name"]
-        bucket = body["bucket"]
         language_code = body["language_code"]
-        print("INFO: file_name parsed as {}, bucket parsed as {}".format(file_name,bucket), flush=True)
+        print("INFO: file_name parsed as {}, bucket parsed as {}".format(file_name, OBJECT_STORAGE_BUCKET), flush=True)
         
         ai_client = getSpeechClient()
         print("INFO: ai_client initilized")
@@ -74,9 +82,9 @@ def speechToText(ctx, data: io.BytesIO=None):
         )
         
         INPUT_LOCATION = oci.ai_speech.models.ObjectListInlineInputLocation(
-            location_type="OBJECT_LIST_INLINE_INPUT_LOCATION", object_locations=[oci.ai_speech.models.ObjectLocation(namespace_name=namespace, bucket_name=bucket, object_names=file_names)])
+            location_type="OBJECT_LIST_INLINE_INPUT_LOCATION", object_locations=[oci.ai_speech.models.ObjectLocation(namespace_name=namespace, bucket_name=OBJECT_STORAGE_BUCKET, object_names=file_names)])
         
-        OUTPUT_LOCATION = oci.ai_speech.models.OutputLocation(namespace_name=namespace, bucket_name=bucket,
+        OUTPUT_LOCATION = oci.ai_speech.models.OutputLocation(namespace_name=namespace, bucket_name=OBJECT_STORAGE_BUCKET,
                                                              prefix=JOB_PREFIX)
         
         transcription_job_details = oci.ai_speech.models.CreateTranscriptionJobDetails(display_name=display_name,
@@ -94,26 +102,49 @@ def speechToText(ctx, data: io.BytesIO=None):
         else:
             print(transcription_job.data)
 
+    except Exception as error:
+        print(error)
+        raise Exception(error)
+    return response.Response(
+        ctx,
+        response_data=json.dump(transcription_job.data),
+        headers={"Content-Type": "application/json"}
+    )
+
+def query_job(ctx, body):
+    try:
+        ai_client = getSpeechClient()
+        print("INFO: ai_client initilized")
+        
+        job_id = body["job_id"]
+        
         print("***GET TRANSCRIPTION JOB WITH ID***")
         try:
-            if transcription_job.data:
-                transcription_tasks = ai_client.list_transcription_tasks(transcription_job.data.id)
+            transcription_tasks = ai_client.list_transcription_tasks(job_id)
         except Exception as e:
             print(e)
-
+        
         while transcription_tasks.status == 200 and len(transcription_tasks.data.items) == 0 :
             time.sleep(1)
-            transcription_tasks = ai_client.list_transcription_tasks(transcription_job.data.id)
+            transcription_tasks = ai_client.list_transcription_tasks(job_id)
             
-        while transcription_tasks.data.items[0].lifecycle_state == "IN_PROGRESS":
-            time.sleep(1)
-            transcription_tasks = ai_client.list_transcription_tasks(transcription_job.data.id)
-            
-        task = transcription_tasks.data.items[0]
-        print(task.lifecycle_state)
+    except Exception as error:
+        print(error)
+        raise Exception(error)
+    return response.Response(
+        ctx,
+        response_data=json.dump(transcription_tasks.data.items[0]),
+        headers={"Content-Type": "application/json"}
+    )
 
-        output_location = transcription_job.data.output_location.prefix + namespace + "_" + bucket + "_" + file_name + ".json"
-        response_message = get_object(bucketName=bucket, objectName=output_location)
+def get_result(ctx, body):
+    try:
+        output_prefix = body["output_prefix"]
+        namespace = get_namespace()
+        file_name = body["file_name"]
+        
+        output_location = output_prefix + namespace + "_" + OBJECT_STORAGE_BUCKET + "_" + file_name + ".json"
+        response_message = get_object(bucketName=OBJECT_STORAGE_BUCKET, objectName=output_location)
     except Exception as error:
         print(error)
         raise Exception(error)
