@@ -179,7 +179,7 @@ def get_result(ctx, body):
         response_message = get_object(bucketName=OBJECT_STORAGE_BUCKET, objectName=output_location)
         return response.Response(
             ctx,
-            response_data=json.dumps({"result": response_message}),
+            response_data = response_message,
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
