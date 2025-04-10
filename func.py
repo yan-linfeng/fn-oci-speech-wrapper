@@ -119,6 +119,7 @@ def create_job(ctx, body):
         transcription_job = ai_client.create_transcription_job(create_transcription_job_details=transcription_job_details)
         response_object = {
             "id" : transcription_job.data.id,
+            "output_prefix" : transcription_job.data.output_location.prefix
         }
         return response.Response(
             ctx,
@@ -153,10 +154,12 @@ def query_job(ctx, body):
                     headers={"Content-Type": "application/json"}
                 )
             time.sleep(1)
-
+        response_object = {
+            "lifecycle_state" : transcription_tasks.data.items[0].lifecycle_state 
+        }
         return response.Response(
             ctx,
-            response_data=json.dumps(to_dict(transcription_tasks.data.items[0])),
+            response_data=json.dumps(response_object),
             headers={"Content-Type": "application/json"}
         )
     except Exception as e:
