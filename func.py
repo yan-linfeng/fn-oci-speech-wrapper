@@ -119,6 +119,7 @@ def create_job(ctx, body):
         transcription_job = ai_client.create_transcription_job(create_transcription_job_details=transcription_job_details)
         response_object = {
             "id" : transcription_job.data.id,
+            "job_name" : display_name,
             "output_prefix" : transcription_job.data.output_location.prefix
         }
         return response.Response(
