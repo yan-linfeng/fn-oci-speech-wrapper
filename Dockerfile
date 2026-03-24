@@ -1,4 +1,4 @@
-FROM oraclelinux:9-slim
+FROM rockylinux:9-minimal
 
 WORKDIR /function
 
